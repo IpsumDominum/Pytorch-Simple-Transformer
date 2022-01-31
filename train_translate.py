@@ -8,6 +8,10 @@ import numpy as np
 from tqdm import tqdm 
 import os
 
+
+"""
+Hyperparameters
+"""
 CUDA = True
 PRINT_INTERVAL = 5000
 VALIDATE_AMOUNT = 10
@@ -24,17 +28,29 @@ learning_rate = 1e-2
 
 device = torch.device('cuda:0' if CUDA else 'cpu')
 
+"""
+Dataset
+"""
 dataset = EnglishToGermanDataset(CUDA=CUDA)
 dataloader = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
 dataloader_test = torch.utils.data.DataLoader(dataset, batch_size=batch_size, shuffle=True)
 
+"""
+Model
+"""
 vocab_size = dataset.german_vocab_len
 torch.set_default_tensor_type(torch.cuda.FloatTensor if CUDA else torch.FloatTensor)
 model = TransformerTranslator(embed_dim,num_blocks,num_heads,vocab_size,CUDA=CUDA).to(device)
 
+"""
+Loss Function + Optimizer
+"""
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
 criterion = nn.KLDivLoss()
 
+"""
+Load From Checkpoint
+"""
 LOAD = -1
 
 if(LOAD!=-1):
@@ -48,7 +64,9 @@ else:
     test_losses = []
     train_losses = []
     num_steps = 0
-
+"""
+Train Loop
+"""
 for epoch in range(num_epochs):
     running_loss = []   
     running_test_loss = []     
@@ -57,24 +75,51 @@ for epoch in range(num_epochs):
     TRAIN LOOP
     """
     for idx,item in enumerate(tqdm(dataloader)):
+        """
+        ============================================================
+        """
         model.train()
+
+        ###################
+        #Zero Gradients
         model.zero_grad()
         optimizer.zero_grad()
+        ###################
+
+        ###################        
+        #Encode English Sentence
         model.encode(item["english"][:,1:-1])
+        ###################        
+
+        ###################        
+        #Output German, One Token At A Time
         all_outs = torch.tensor([],requires_grad=True).to(device)
         for i in range(item["german"].shape[1]-1):
             out = model(item["german"][:,:i+1])
             all_outs = torch.cat((all_outs,out),dim=1)
+        ###################        
+
+        ###################        
+        #Mask Out Extra Padded Tokens In The End(Optional)
         all_outs = all_outs * item["logit_mask"][:,1:,:]
         item["logits"] = item["logits"] * item["logit_mask"]
+        ###################
+
+        ###################        
+        #BackProp
         loss = criterion(all_outs,item["logits"][:,1:,:])
         loss.backward()
         optimizer.step()
+        ###################        
+
         running_loss.append(loss.item())
         num_steps +=1
+        """
+        ============================================================
+        """
         if(num_steps % PRINT_INTERVAL ==0 or idx==len(dataloader)-1):            
             """
-            TEST LOOP
+            Validation LOOP
             """                        
             all_outs.detach().cpu()
             item["logits"].detach().cpu()
