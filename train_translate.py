@@ -1,4 +1,4 @@
-from gen_dataset import EnglishToGermanDataset
+from Dataset.translation_dataset import EnglishToGermanDataset
 from Transformer.transfomer import TransformerTranslator
 import torch
 import torch.nn as nn
@@ -12,7 +12,7 @@ import os
 """
 Hyperparameters
 """
-CUDA = True
+CUDA = False
 PRINT_INTERVAL = 5000
 VALIDATE_AMOUNT = 10
 SAVE_INTERVAL = 1000
