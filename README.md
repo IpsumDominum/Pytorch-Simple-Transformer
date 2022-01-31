@@ -3,17 +3,19 @@
 An implementation of the "Attention is all you need" paper without extra bells and whistles,
 or difficult syntax.
 
+Note: The only extra thing added is Dropout regularization in some layers and option to use GPU.
+
 ### Install
 ```
 python -m pip install -r requirements.txt
 ```
 
-### Toy dataset
+### Toy data
 ```
 python train_toy_data.py
 ```
 
-| Before      | After 100 Epoch |
+| Before Training   | After 100 Epoch |
 | ----------- | ----------- |
 |![Image](Begin.png)   |   ![Image](After100.png)   |
 
