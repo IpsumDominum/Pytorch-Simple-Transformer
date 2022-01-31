@@ -56,12 +56,12 @@ for i in range(epoch_num):
     optimizer.zero_grad()
     torch_outs = None
     iy_label_outs = None
-    iy_label_outs_args = torch.tensor([0],requires_grad=False,dtype=torch.int64)
+    iy_label_outs_args = torch.tensor([],requires_grad=False,dtype=torch.int64)
 
     _ = test.encode(ix)  #Encode
     for interval_jdx in range(1,101):
         if(interval_jdx!=1):
-            iy = y[:interval_jdx]
+            iy = iy_label_outs_args#y[:interval_jdx]
         else:
             iy = torch.tensor([0],dtype=torch.int64)
         #Predict next token        
@@ -80,7 +80,7 @@ for i in range(epoch_num):
             iy_label_outs = iy_label        
         iy_label_outs_args = torch.cat((iy_label_outs_args,torch.tensor([torch.argmax(out)],dtype=torch.int64)),dim=0)
         outs.append(torch.argmax(out.detach()))    
-    plot_data(y,outs,i)   
+    #plot_data(y,outs,i)   
     loss = criterion(iy_label_outs,torch_outs[0])
     loss.backward()
     optimizer.step()
@@ -95,7 +95,7 @@ for i in range(1):
     ix = y.unsqueeze(0)
     torch_outs = None
     iy_label_outs = None
-    iy_label_outs_args = torch.tensor([0],requires_grad=False,dtype=torch.int64)
+    iy_label_outs_args = torch.tensor([],requires_grad=False,dtype=torch.int64)
     _ = test.encode(ix)
     for interval_jdx in range(1,101):
         if(interval_jdx!=1):
