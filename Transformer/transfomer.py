@@ -49,7 +49,7 @@ class TransformerTranslator(nn.Module):
         self.device = torch.device('cuda:0' if CUDA else 'cpu')
     def encode(self,input_sequence):               
         embedding = self.embedding(input_sequence).to(self.device)
-        self.encode_out = self.encoder(embedding)
+        self.encode_out = self.encoder(embedding)        
         self.encoded = True
     def forward(self,output_sequence):
         if(self.encoded==False):

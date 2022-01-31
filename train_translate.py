@@ -130,7 +130,7 @@ for epoch in range(num_epochs):
                     model.encode(item["english"][:,1:-1])
                     all_outs = torch.tensor([],requires_grad=True).to(device)
                     for i in range(item["german"].shape[1]-1):
-                        out = model(item["german"][:,:i+1])
+                        out = model(item["german"][:,:i+1])                        
                         all_outs = torch.cat((all_outs,out),dim=1)
                     all_outs = all_outs * item["logit_mask"][:,1:,:]
                     item["logits"] = item["logits"] * item["logit_mask"]

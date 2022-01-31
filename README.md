@@ -15,9 +15,7 @@ python -m pip install -r requirements.txt
 python train_toy_data.py
 ```
 
-| Before Training   | After 100 Epoch |
-| ----------- | ----------- |
-|![Image](Extra_Scripts/Begin.png)   |   ![Image](Extra_Scripts/After100.png)   |
+![Image](Extra_Scripts/toy_data.gif)
 
 ### English -> German Europarl dataset
 ```

@@ -33,6 +33,7 @@ class SelfAttention(nn.Module):
         #Apply attention weights to value
         attention_weighted_value = torch.matmul(attention_weights,value) #(n_query,n_key) matmul (n_key || n_query , d_v)
         attention_weighted_value = self.dropout(attention_weighted_value)
+        
         return attention_weighted_value
 class MultiHeadAttention(nn.Module):
     def __init__(self,embed_dim,d_k,d_v,num_heads,mask=False,CUDA=False):
@@ -44,7 +45,7 @@ class MultiHeadAttention(nn.Module):
         self.CUDA = CUDA
         self.device = torch.device('cuda:0' if CUDA else 'cpu')
     def forward(self,query,key,value,residual_x):                
-        attention_out = torch.tensor([],requires_grad=True).to(self.device)
+        attention_out = torch.tensor([],requires_grad=True).to(self.device)        
         for attention in self.attention_blocks:
             attention_out = torch.cat((attention_out,attention(query,key,value)),dim=2)        
         add_and_norm = self.norm(attention_out + residual_x)        
@@ -59,8 +60,8 @@ class LayerNorm(nn.Module):
         self.eps = eps
     def forward(self, x):
         mean = x.mean(-1, keepdim=True)
-        std = x.std(-1, keepdim=True)        
-        div =  (std + self.eps) + self.shift
+        std = x.std(-1, keepdim=True) 
+        div =  (std + self.eps) + self.shift        
         return self.scale * (x - mean) /(div)
 class PositionWiseFeedForward(nn.Module):
     def __init__(self,embed_dim,output_dim):
@@ -74,7 +75,7 @@ class PositionWiseFeedForward(nn.Module):
         x = torch.max(torch.zeros(x.shape),self.l1(x))
         x = self.RELU(x)
         x = self.l2(x)
-        x = self.dropout(x)
+        x = self.dropout(x)        
         x = self.norm(x+residual_x)
         return x
 
