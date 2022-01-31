@@ -17,7 +17,7 @@ python train_toy_data.py
 
 | Before Training   | After 100 Epoch |
 | ----------- | ----------- |
-|![Image](Begin.png)   |   ![Image](After100.png)   |
+|![Image](Extra_Script/Begin.png)   |   ![Image](Extra_Script/After100.png)   |
 
 ### English -> German Europarl dataset
 ```
@@ -25,7 +25,7 @@ python train_translate.py
 ```
 
 Training on a small subset of 1000 sentences (Included in this repo)
-![Image](Loss.png)
+![Image](Extra_Script/Loss.png)
 
 
 
