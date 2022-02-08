@@ -35,6 +35,7 @@ class SelfAttention(nn.Module):
             )
             attention_weights[:, indices[0], indices[1]] = float("-inf")
         attention_weights = F.softmax(attention_weights, dim=2)
+        
         # Apply attention weights to value
         attention_weighted_value = torch.matmul(
             attention_weights, value

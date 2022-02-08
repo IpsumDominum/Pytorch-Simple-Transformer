@@ -12,19 +12,19 @@ import os
 """
 Hyperparameters
 """
-CUDA = False
+CUDA = True
 PRINT_INTERVAL = 5000
 VALIDATE_AMOUNT = 10
-SAVE_INTERVAL = 1000
+SAVE_INTERVAL = 5000
 
-batch_size = 32
+batch_size = 64
 embed_dim = 64
 num_blocks = 2
 num_heads = 1  # Must be factor of token size
 max_context_length = 1000
 
 num_epochs = 1000
-learning_rate = 1e-2
+learning_rate = 1e-3
 
 device = torch.device("cuda:0" if CUDA else "cpu")
 
@@ -95,22 +95,24 @@ for epoch in range(num_epochs):
 
         ###################
         # Encode English Sentence
-        model.encode(item["english"][:, 1:-1])
+        model.encode(item["english"])
         ###################
 
         ###################
         # Output German, One Token At A Time
         all_outs = torch.tensor([], requires_grad=True).to(device)
-        for i in range(item["german"].shape[1] - 1):
-            out = model(item["german"][:, : i + 1])
+        for i in range(item["german"].shape[1]-1):  
+            #Minus one because we don't need to predict from <end> token
+            out = model(item["german"][:, : i + 1]) #Start with seeing <start> token       
             all_outs = torch.cat((all_outs, out), dim=1)
         ###################
-
+        
         ###################
         # Mask Out Extra Padded Tokens In The End(Optional)
         all_outs = all_outs * item["logit_mask"][:, 1:, :]
         item["logits"] = item["logits"] * item["logit_mask"]
         ###################
+        
 
         ###################
         # BackProp
@@ -145,6 +147,8 @@ for epoch in range(num_epochs):
                     running_test_loss.append(loss.item())
                     if jdx == VALIDATE_AMOUNT:
                         break
+
+                    
             avg_test_loss = np.array(running_test_loss).mean()
             test_losses.append(avg_test_loss)
             avg_loss = np.array(running_loss).mean()

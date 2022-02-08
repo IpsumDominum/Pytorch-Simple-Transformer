@@ -39,8 +39,7 @@ def process_vocab(sentences, data_amount):
                     count += 1
                 processed_sentences[idx].append(vocab[buffer])
                 processed_sentences[idx].append(vocab[character])
-                buffer = ""
-        processed_sentences[idx].append(vocab["<end>"])
+                buffer = ""        
         processed_sentences[idx] = torch.tensor(
             processed_sentences[idx], dtype=torch.int64
         )

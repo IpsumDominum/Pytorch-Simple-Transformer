@@ -66,13 +66,14 @@ class EnglishToGermanDataset(torch.utils.data.Dataset):
             english_item = self.english_sentences_train[idx]
         min_len = min(len(german_item), len(english_item))
         start_token = torch.tensor([self.german_vocab["<start>"]], dtype=torch.int64)
+        end_token = torch.tensor([self.german_vocab["<end>"]], dtype=torch.int64)
         if min_len > self.min_len:
             # Crop randomly
             crop_range = min(len(german_item), len(english_item)) - self.min_len
             crop = random.randint(0, crop_range)
             german_item = german_item[crop : self.min_len + crop]
             english_item = english_item[crop : self.min_len + crop]
-            german_item = torch.cat((start_token, german_item))
+            german_item = torch.cat((start_token, german_item,end_token))
             logit_mask = torch.ones((len(german_item), 1), dtype=torch.bool)
         else:
             german_item = F.pad(
@@ -87,7 +88,7 @@ class EnglishToGermanDataset(torch.utils.data.Dataset):
                 "constant",
                 self.english_eos,
             )
-            german_item = torch.cat((start_token, german_item))
+            german_item = torch.cat((start_token, german_item,end_token))
             # Logit Mask For Training
             logit_mask = torch.ones((len(german_item), 1), dtype=torch.bool)
             logit_mask[min_len + 1 :, :] = 0
