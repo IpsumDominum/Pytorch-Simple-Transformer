@@ -7,6 +7,7 @@ import torch.optim as optim
 import numpy as np
 from tqdm import tqdm
 import os
+import random()
 
 
 """
@@ -17,7 +18,7 @@ PRINT_INTERVAL = 5000
 VALIDATE_AMOUNT = 10
 SAVE_INTERVAL = 5000
 
-batch_size = 64
+batch_size = 128
 embed_dim = 64
 num_blocks = 2
 num_heads = 1  # Must be factor of token size
@@ -25,6 +26,8 @@ max_context_length = 1000
 
 num_epochs = 1000
 learning_rate = 1e-3
+
+use_teacher_forcing = False
 
 device = torch.device("cuda:0" if CUDA else "cpu")
 
@@ -51,7 +54,7 @@ model = TransformerTranslator(
 Loss Function + Optimizer
 """
 optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
-criterion = nn.KLDivLoss()
+criterion = nn.KLDivLoss(reduction='batchmean')
 
 """
 Load From Checkpoint
@@ -101,10 +104,17 @@ for epoch in range(num_epochs):
         ###################
         # Output German, One Token At A Time
         all_outs = torch.tensor([], requires_grad=True).to(device)
+        all_outs_tokens = item["german"][:,:1]
         for i in range(item["german"].shape[1]-1):  
-            #Minus one because we don't need to predict from <end> token
-            out = model(item["german"][:, : i + 1]) #Start with seeing <start> token       
+            if(use_teacher_forcing):
+                out = model(item["german"][:,: i+1])
+            else:
+                #Minus one because we don't need to predict from <end> token
+                out = model(all_outs_tokens[:, : i + 1]) #Start with seeing <start> token
             all_outs = torch.cat((all_outs, out), dim=1)
+            #Get the token output, so to feed it back to self in next round.
+            out_token = torch.argmax(out,dim=1)
+            all_outs_tokens = torch.cat((all_outs_tokens,out_token),dim=1)
         ###################
         
         ###################
@@ -116,7 +126,7 @@ for epoch in range(num_epochs):
 
         ###################
         # BackProp
-        loss = criterion(all_outs, item["logits"][:, 1:, :])
+        loss = criterion(all_outs, item["logits"][:, 1:, :]) #Shift one so as not to predict start token
         loss.backward()
         optimizer.step()
         ###################
@@ -136,14 +146,18 @@ for epoch in range(num_epochs):
             model.eval()
             with torch.no_grad():
                 for jdx, item in enumerate(dataloader_test):
-                    model.encode(item["english"][:, 1:-1])
-                    all_outs = torch.tensor([], requires_grad=True).to(device)
+                    model.encode(item["english"])
+                    all_outs = torch.tensor([], requires_grad=False).to(device)
+                    all_outs_tokens = item["german"][:,:1]
                     for i in range(item["german"].shape[1] - 1):
-                        out = model(item["german"][:, : i + 1])
-                        all_outs = torch.cat((all_outs, out), dim=1)
-                    all_outs = all_outs * item["logit_mask"][:, 1:, :]
+                        #No teacher forcing in validation                        
+                        out = model(all_outs_tokens[:,:i+1])
+                        out_token = torch.argmax(out,dim=1)
+                        all_outs = torch.cat((all_outs, out), dim=1)                        
+                        all_outs_tokens = torch.cat((all_outs_tokens,out_token),dim=1)
+                    all_outs = all_outs * item["logit_mask"][:,1:,:]
                     item["logits"] = item["logits"] * item["logit_mask"]
-                    loss = criterion(all_outs, item["logits"][:, 1:, :])
+                    loss = criterion(all_outs, item["logits"][:,1:,:])
                     running_test_loss.append(loss.item())
                     if jdx == VALIDATE_AMOUNT:
                         break
